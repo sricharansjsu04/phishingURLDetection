@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing URL Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            text-align: center;
+            background: #ffffff;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .features {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .feature-item {
+            margin: 5px 0;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .red {
+            color: red;
+            font-weight: bold;
+        }
+
+        .green {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Phishing URL Detector</h1>
+        <p>Enter a URL to check if it's phishing or legitimate.</p>
+        <input type="text" id="urlInput" placeholder="Enter any URL here" />
+        <button onclick="checkURL()">Check URL</button>
+        <div class="result" id="result"></div>
+        <div class="features" id="features"></div>
+    </div>
+
+    <script>
+        async function checkURL() {
+            const url = document.getElementById('urlInput').value;
+            const resultDiv = document.getElementById('result');
+            const featuresDiv = document.getElementById('features');
+
+            if (!url) {
+                resultDiv.innerHTML = '<span class="error">Please enter a URL.</span>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
+
+                const data = await response.json();
+
+                // Display prediction
+                if (data.result === 'Phishing') {
+                    resultDiv.innerHTML = '<span class="error red">The URL is classified as: Phishing</span>';
+                } else if (data.result === 'Legitimate') {
+                    resultDiv.innerHTML = '<span class="success green">The URL is classified as: Legitimate</span>';
+                } else {
+                    resultDiv.innerHTML = '<span class="error">Unexpected response: ' + data.result + '</span>';
+                }
+
+                // Display features
+                featuresDiv.innerHTML = '<h2>Feature Analysis:</h2>';
+                Object.entries(data.features).forEach(([key, value]) => {
+                    const colorClass = value === 1 ? 'red' : 'green';
+                    featuresDiv.innerHTML += `
+                        <div class="feature-item">
+                            ${key}: <span class="feature-value ${colorClass}">${value === 1 ? 'Suspicious' : 'Safe'}</span>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">An error occurred: ' + error.message + '</span>';
+            }
+        }
+    </script>
+</body>
+</html>
